@@ -77,6 +77,7 @@ jobs:
         run: .\scripts\test_build_win.ps1
 
   build_linux:
+    if: ${{ false }}
     strategy:
       fail-fast: false
       # SELF_HOSTED skips arm64 (no arm self-hosted server). amd64's empty arch
@@ -86,8 +87,7 @@ jobs:
         include: ${{ fromJSON(vars.SELF_HOSTED
           && '[{"arch":"","os":"orca-lnx-server"}]'
           || '[{"arch":"","os":"ubuntu-24.04"},{"arch":"aarch64","os":"ubuntu-24.04-arm"}]') }}
-    # Don't run scheduled builds on forks:
-    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
+    # Disabled on this targeted Windows hardware-test branch.
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: ${{ matrix.os }}
@@ -102,7 +102,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(vars.SELF_HOSTED
           && '[{"arch":"x64","os":"orca-win-server","compiler":"clang"}]'
-          || '[{"arch":"x64","os":"windows-latest","compiler":"clang"},{"arch":"arm64","os":"windows-11-vs2026-arm","compiler":"clang"}]') }}
+          || '[{"arch":"x64","os":"windows-latest","compiler":"clang"}]') }}
     needs: check_build_script
     # Don't run scheduled builds on forks:
     if: ${{ !cancelled() && needs.check_build_script.result == 'success' && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
@@ -115,14 +115,13 @@ jobs:
       force-build: ${{ github.event_name == 'schedule' }}
     secrets: inherit
   build_macos_arch:
+    if: ${{ false }}
     strategy:
       fail-fast: false
       matrix:
         arch:
           - arm64
           - x86_64
-    # Don't run scheduled builds on forks:
-    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-14' }}
@@ -210,7 +209,7 @@ jobs:
   publish_test_results:
     name: Publish Test Results
     needs: [unit_tests_linux_x86_64, unit_tests_linux_aarch64, unit_tests_windows_x64, unit_tests_windows_arm64, unit_tests_macos_arm64, unit_tests_flatpak_x86_64, unit_tests_flatpak_aarch64]
-    if: ${{ !cancelled() }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - name: Download Test Results
@@ -232,6 +231,7 @@ jobs:
           name: test-results-*
           failOnError: false
   flatpak:
+    if: ${{ false }}
     name: "Flatpak"
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
@@ -250,9 +250,7 @@ jobs:
             runner: ubuntu-24.04
           - arch: aarch64
             runner: ubuntu-24.04-arm
-    # Don't run scheduled builds on forks; skip entirely on self-hosted runners
-    if: ${{ !cancelled() && !vars.SELF_HOSTED && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
-
+    # Disabled on this targeted Windows hardware-test branch.
     runs-on: ${{ matrix.variant.runner }}
     env:
       date:
