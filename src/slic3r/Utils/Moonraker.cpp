@@ -171,9 +171,10 @@ bool Moonraker::get_storage(wxArrayString &storage_path, wxArrayString &storage_
     return got_any;
 }
 
-bool Moonraker::start_print(wxString &error_msg, const std::string &filename) const
+bool Moonraker::start_print(wxString &error_msg, const std::string &filename, const std::string &plateindex) const
 {
-    //ORCA: POST /printer/print/start with JSON body { "filename": "<name>.gcode" }.
+    //ORCA: POST /printer/print/start with JSON body { "filename": "<name>.gcode" } and, when available,
+    //      the 1-based plateindex used by .gcode.3mf archives.
     //      `filename` is what /server/files/upload returned as result.item.path (the storage-relative
     //      path inside `root`, no leading slash, with extension). Build the body via property_tree
     //      so that special characters in the filename (server-side collision-suffix could produce
@@ -183,6 +184,8 @@ bool Moonraker::start_print(wxString &error_msg, const std::string &filename) co
     auto url = make_url("printer/print/start");
     pt::ptree body_tree;
     body_tree.put("filename", filename);
+    if (!plateindex.empty())
+        body_tree.put("plateindex", plateindex);
     std::ostringstream body_ss;
     pt::write_json(body_ss, body_tree, /*pretty=*/false);
     std::string body = body_ss.str();
@@ -308,7 +311,7 @@ bool Moonraker::upload(PrintHostUpload upload_data, ProgressFn progress_fn, Erro
 
     if (upload_data.post_action == PrintHostPostUploadAction::StartPrint && !uploaded_path.empty()) {
         wxString start_msg;
-        if (!start_print(start_msg, uploaded_path)) {
+        if (!start_print(start_msg, uploaded_path, plateindex)) {
             error_fn(std::move(start_msg));
             return false;
         }

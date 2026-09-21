@@ -22,7 +22,7 @@ class Http;
 // Endpoints used:
 //   GET  /server/info                      -- connection test, reads klippy_state
 //   POST /server/files/upload (multipart)  -- upload gcode (form fields: file, root)
-//   POST /printer/print/start (json)       -- {"filename":"<name>.gcode"} starts print
+//   POST /printer/print/start (json)       -- {"filename":"<name>.gcode","plateindex":"<N>"} starts print
 //
 // Auth: X-Api-Key header if `printhost_apikey` is non-empty; Moonraker accepts
 // unauthenticated LAN access by default, so the key is optional. HTTP Basic /
@@ -55,7 +55,7 @@ protected:
 
     void set_auth(Http &http) const;
     std::string make_url(const std::string &path) const;
-    bool start_print(wxString &error_msg, const std::string &filename) const;
+    bool start_print(wxString &error_msg, const std::string &filename, const std::string &plateindex) const;
 };
 
 }
